@@ -92,3 +92,7 @@ pnpm check
 ```
 
 This typechecks, lints, tests and builds both packages, and CI runs the same steps. To try changes to the agent turn by turn, use the [agent debugger](https://docs.livekit.io/testing/debugger/) from `agent/`. Simulations in `agent/scenarios.yaml` run on every merge to `main`, once you add `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` as repository secrets.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE). `web/` is forked from LiveKit's [`template-default`](https://github.com/livekit/egress/tree/main/template-default), also Apache-2.0, and keeps its original file headers.
