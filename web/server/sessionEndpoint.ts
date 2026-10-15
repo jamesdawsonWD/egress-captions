@@ -17,7 +17,7 @@ const SESSION_PATH = '/api/session';
 const ENV_DIR = '../agent';
 const AGENT_NAME = 'agent';
 const RECORDING_LAYOUT = 'grid';
-const RECORDING_FILEPATH = 'egress-caption-test/{room_name}-{time}.mp4';
+const RECORDING_FILEPATH = 'recordings/{room_name}-{time}.mp4';
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 type Env = Record<string, string>;

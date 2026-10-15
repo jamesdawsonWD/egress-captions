@@ -1,12 +1,18 @@
 # AGENTS.md
 
-This is a LiveKit Agents project. LiveKit Agents is a Node.js SDK for building voice AI agents. This starter is designed to run in LiveKit Cloud. See @README.md for more about the rest of the LiveKit ecosystem.
+This project burns live captions into LiveKit RoomComposite egress recordings. It runs on LiveKit Cloud. See @README.md for how the pieces fit together.
+
+## Project layout
+
+- `agent/` is a LiveKit Agents (Node.js) voice agent, based on `agent-starter-node`. Its only change is to wait for recording to start before greeting, in `agent/src/recording.ts`.
+- `web/` is a fork of the egress `template-default` recording template. It also holds the demo call page (`client.html`) and a dev-server endpoint (`web/server/sessionEndpoint.ts`) that creates rooms with auto egress.
+- Both packages read credentials from `agent/.env.local`.
 
 ## Tooling
 
-This Node.js project uses the `pnpm` package manager.
+Both packages use the `pnpm` package manager and have their own dependencies. Run commands inside `agent/` or `web/`, or run `pnpm check` at the root to typecheck, lint, test and build both.
 
-Be sure to maintain code formatting, using `pnpm format` and `pnpm lint`.
+Be sure to maintain code formatting, using `pnpm format` and `pnpm lint` in `agent/`, and `pnpm lint` in `web/`.
 
 ## LiveKit documentation
 
@@ -40,7 +46,7 @@ Voice AI agents are highly sensitive to latency. Design complex agents in a stru
 
 ## Testing
 
-To keep agent behavior from regressing, add a scenario to `scenarios.yaml` and run it with `lk agent simulate text --scenarios scenarios.yaml`. Make sure the scenarios run in CI on every merge to `main`. Read the [simulations documentation](https://docs.livekit.io/testing/simulations/) before editing them.
+To keep agent behavior from regressing, add a scenario to `agent/scenarios.yaml` and run it from `agent/` with `lk agent simulate text --scenarios scenarios.yaml`. Make sure the scenarios run in CI on every merge to `main`. Read the [simulations documentation](https://docs.livekit.io/testing/simulations/) before editing them.
 
 Important: when you modify core agent behavior such as instructions, tool descriptions, or tasks, workflows, and handoffs, never guess at what works. Start by writing a scenario for the desired behavior. For example, if you're adding a tool, write a scenario that exercises it, then iterate on the tool until the scenario passes. This is how you produce a working, reliable agent.
 

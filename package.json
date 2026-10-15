@@ -1,0 +1,12 @@
+{
+  "name": "egress-captions",
+  "private": true,
+  "description": "Burn live agent and user captions into LiveKit RoomComposite recordings",
+  "scripts": {
+    "bootstrap": "pnpm --dir agent install && pnpm --dir web install",
+    "dev:agent": "pnpm --dir agent dev",
+    "dev:web": "pnpm --dir web dev",
+    "tunnel": "cloudflared tunnel --url http://localhost:5173",
+    "check": "pnpm --dir agent typecheck && pnpm --dir agent lint && pnpm --dir agent test && pnpm --dir web typecheck && pnpm --dir web lint && pnpm --dir web build"
+  }
+}

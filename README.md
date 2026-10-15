@@ -1,23 +1,27 @@
-# Egress caption test
+# Egress captions
 
-Proof that LiveKit can burn live captions into a RoomComposite recording **today**, with no feature request and no agent changes.
+Burn live captions into LiveKit [RoomComposite egress](https://docs.livekit.io/transport/media/ingress-egress/egress/composite-recording/) recordings, for both the agent's speech and the user's. No egress changes or agent plugins are needed.
 
-The agent already sends every transcript (its own speech and the user's STT) to all participants on the `lk.transcription` text stream. That includes the hidden egress recorder. A custom recording template listens to that stream and draws captions over the grid, so they end up in the MP4. Each user decides whether captions appear in the recording, on their own screen, or nowhere.
+`AgentSession` already sends every transcript to all participants on the `lk.transcription` text stream. That includes the hidden egress recorder. This project's [custom recording template](https://docs.livekit.io/transport/media/ingress-egress/egress/custom-template/) listens to that stream and draws captions over the grid, so they're burned into the MP4. Each user chooses whether captions appear in the recording, on their own screen, both, or neither.
 
-## What's here
+## How it works
+
+```
+call page (client.html) ── POST /api/session ──▶ CreateRoom with auto egress ──▶ egress loads index.html
+        │                                         + dispatch agent                    (hidden recorder)
+        │ captions = off | recording | on                                                     │
+        ▼ (participant attribute)                                                             ▼
+    LiveKit room ◀──── agent publishes audio + lk.transcription ────▶ template draws captions ──▶ MP4 in your bucket
+```
 
 | Path | What it is |
 | --- | --- |
-| `agent/` | Unmodified `agent-starter-node` (`lk agent init`). Dispatched explicitly as `agent`. |
-| `template/` | Fork of [`livekit/egress/template-default`](https://github.com/livekit/egress/tree/main/template-default) at `63eb8bd`, plus captions. |
-| `template/src/CaptionOverlay.tsx` | Draws the last two transcript segments with `useTranscriptions()`. Clears after 5 s of quiet. |
-| `template/src/Room.tsx` | The recording view. Grid with placeholder tiles for audio-only participants, and captions when anyone asks for them. |
-| `template/client.html`, `src/UserApp.tsx` | A minimal user page with the captions control. |
-| `template/server/sessionEndpoint.ts` | Dev-server endpoint `POST /api/session`. It creates the room with **auto egress**, dispatches the agent and returns a user token. |
+| [`agent/`](agent/) | Voice agent based on `agent-starter-node`. It waits for recording to start before greeting. |
+| [`web/`](web/) | The recording template (`index.html`), the call page (`client.html`) and the session endpoint. |
 
 ## Caption modes
 
-The user page sets a `captions` participant attribute. The recording template reads it live.
+The call page sets a `captions` attribute on the user's participant. The recording template reads it live.
 
 | Mode | User sees captions | Recording has captions |
 | --- | --- | --- |
@@ -27,47 +31,64 @@ The user page sets a `captions` participant attribute. The recording template re
 
 The recording shows captions while **any** participant has `recording` or `on`. Changing the mode mid-call takes effect in the recording from that moment.
 
-## Run it
+## Getting started
 
-Prerequisites: `lk` CLI, pnpm, `cloudflared`, and an S3 bucket (or R2, which needs `S3_ENDPOINT` set).
+You'll need the [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/) (2.18.8 or later), Node.js 24, pnpm, [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/), a [LiveKit Cloud](https://cloud.livekit.io/) project, and an S3-compatible storage bucket.
 
-1. Add the recording settings to `agent/.env.local`, next to the `LIVEKIT_*` keys:
+1. Install dependencies and create your env file:
 
    ```bash
-   S3_BUCKET=...
-   S3_REGION=...
-   S3_ACCESS_KEY=...
-   S3_SECRET=...
-   # S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com   # non-AWS only
-   TEMPLATE_PUBLIC_URL=https://<from step 3>.trycloudflare.com
+   pnpm bootstrap
    ```
 
-   Without `TEMPLATE_PUBLIC_URL` and `S3_BUCKET`, calls still work but aren't recorded.
+   ```bash
+   cp agent/.env.example agent/.env.local
+   ```
+
+   Fill in `LIVEKIT_*`, or run `lk app env --write --destination agent/.env.local`. Then fill in the `S3_*` values for your bucket. For providers other than AWS, set `S3_ENDPOINT` too.
 
 2. Start the agent:
 
    ```bash
-   cd agent && lk agent dev
+   pnpm dev:agent
    ```
 
-3. Start the template and expose it so LiveKit Cloud egress can load it:
+3. In a second terminal, start the template and call page:
 
    ```bash
-   cd template && pnpm install && pnpm dev
+   pnpm dev:web
    ```
+
+4. In a third terminal, expose the template so LiveKit Cloud egress can load it:
 
    ```bash
-   cloudflared tunnel --url http://localhost:5173
+   pnpm tunnel
    ```
 
-   Put the printed URL in `TEMPLATE_PUBLIC_URL`, then restart `pnpm dev`.
+   Copy the `https://….trycloudflare.com` URL it prints into `TEMPLATE_PUBLIC_URL` in `agent/.env.local`, then restart `pnpm dev:web`. Quick tunnels get a new URL on every start.
 
-4. Open <http://localhost:5173/client.html>, pick a captions mode and start a call. Recording starts when the room is created and stops when the room closes, shortly after you hang up. The MP4 lands at `s3://$S3_BUCKET/egress-caption-test/<room>-<time>.mp4`.
+5. Open the call page, pick a captions mode, and start a call:
 
-## Limits
+   ```bash
+   open http://localhost:5173/client.html
+   ```
 
-- **User captions lag.** User speech is captioned after STT, typically a few hundred ms to about a second behind the audio. Agent captions are synced to its audio playout.
-- **Off is display-only.** The agent still sends transcripts to every participant; Off only stops them being drawn. Actually withholding them would need agent changes.
-- **Any user opts the whole recording in.** A privacy-minded alternative is per speaker: caption each user's speech only if they opted in, and always caption the agent. To do that, filter `useTranscriptions()` by the speaker's own `captions` attribute.
-- **Use a real mic.** The agent links to the first participant to join. If that participant has no audio track (for example a browser with the mic blocked), the starter agent's greeting can stall, and there's nothing to transcribe.
-- **Local only.** The session endpoint only answers requests addressed to `localhost`, so the public tunnel can serve the recording template but can't mint tokens. In production, create the room (with its `egress` config) from your backend and host the template on any static host.
+   The room is created with [auto egress](https://docs.livekit.io/transport/media/ingress-egress/egress/autoegress/), so recording starts by itself. The page shows **Starting recording…** for a few seconds, and the agent greets you once recording is live. After you hang up, the room closes and the MP4 is uploaded to `recordings/<room>-<time>.mp4` in your bucket.
+
+Without `TEMPLATE_PUBLIC_URL` and `S3_BUCKET`, calls still work but aren't recorded.
+
+## Things to know
+
+- **User captions lag.** The user's speech is captioned after STT, typically a few hundred ms to about a second behind the audio. Agent captions are synced to its audio playout.
+- **Late joiners miss the sentence in progress.** A transcript stream can't be picked up partway through. This is why the agent waits for `room.isRecording` before greeting; otherwise the greeting starts before the recorder joins.
+- **Off is display-only.** The agent still sends transcripts to every participant; Off only stops them being drawn.
+- **Any user opts the whole recording in.** If you need consent per speaker, filter `useTranscriptions()` in [`CaptionOverlay.tsx`](web/src/CaptionOverlay.tsx) by each speaker's own `captions` attribute, and always caption the agent.
+- **The session endpoint is for local development.** It only answers requests addressed to `localhost`, so the tunnel can serve the template but can't mint tokens. In production, create rooms (with their `egress` config) from your backend, and host `web/` on any static host.
+
+## Development
+
+```bash
+pnpm check
+```
+
+This typechecks, lints, tests and builds both packages, and CI runs the same steps. To try changes to the agent turn by turn, use the [agent debugger](https://docs.livekit.io/testing/debugger/) from `agent/`. Simulations in `agent/scenarios.yaml` run on every merge to `main`, once you add `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` as repository secrets.

@@ -15,6 +15,9 @@ permissions:
 jobs:
   simulate:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent
     env:
       LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
       LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
@@ -27,7 +30,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.15.0
+          version: 12
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,7 +38,7 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Install LiveKit CLI
         run: curl -sSL https://get.livekit.io/cli | bash

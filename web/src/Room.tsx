@@ -59,10 +59,10 @@ interface CompositeTemplateProps {
 function CompositeTemplate({ layout: initialLayout }: CompositeTemplateProps) {
   const room = useRoomContext();
   const [layout] = useState(initialLayout);
-  const [hasScreenShare, setHasScreenShare] = useState(false);
   const screenshareTracks = useTracks([Track.Source.ScreenShare], {
     onlySubscribed: true,
   });
+  const hasScreenShare = screenshareTracks.length > 0 && !!screenshareTracks[0].publication;
 
   EgressHelper.setRoom(room);
 
@@ -114,14 +114,6 @@ function CompositeTemplate({ layout: initialLayout }: CompositeTemplateProps) {
     }, 100);
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, []);
-
-  useEffect(() => {
-    if (screenshareTracks.length > 0 && screenshareTracks[0].publication) {
-      setHasScreenShare(true);
-    } else {
-      setHasScreenShare(false);
-    }
-  }, [screenshareTracks]);
 
   const allTracks = useTracks(
     [Track.Source.Camera, Track.Source.ScreenShare, Track.Source.Unknown],

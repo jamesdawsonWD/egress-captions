@@ -56,7 +56,25 @@ body {
 }
 
 .recordingStatus {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  z-index: 1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.recordingStatus.live {
   color: #ff5a5a;
+}
+
+.recordingStatus.starting {
+  color: #ffd166;
+}
+
+.recordingStatus.idle {
+  color: #aaa;
 }
 
 .callRoom {

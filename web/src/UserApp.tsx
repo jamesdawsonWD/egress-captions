@@ -5,6 +5,7 @@ import {
   LiveKitRoom,
   ParticipantTile,
   RoomAudioRenderer,
+  useIsRecording,
   useLocalParticipant,
   useTracks,
 } from '@livekit/components-react';
@@ -55,11 +56,6 @@ export default function UserApp() {
     <div className="userApp">
       <header className="callBar">
         <CaptionsModeControl mode={captionsMode} onChange={changeCaptionsMode} />
-        {session && (
-          <span className="recordingStatus">
-            {session.recording ? '● Recording' : 'Not recording (egress not configured)'}
-          </span>
-        )}
       </header>
       {session ? (
         <LiveKitRoom
@@ -71,7 +67,7 @@ export default function UserApp() {
           onDisconnected={() => setSession(undefined)}
           className="callRoom"
         >
-          <Call captionsMode={captionsMode} />
+          <Call captionsMode={captionsMode} recordingConfigured={session.recording} />
         </LiveKitRoom>
       ) : (
         <div className="lobby">
@@ -85,12 +81,19 @@ export default function UserApp() {
   );
 }
 
-function Call({ captionsMode }: { captionsMode: CaptionsMode }) {
+function Call({
+  captionsMode,
+  recordingConfigured,
+}: {
+  captionsMode: CaptionsMode;
+  recordingConfigured: boolean;
+}) {
   usePublishedCaptionsMode(captionsMode);
   const tiles = useTracks([{ source: Track.Source.Camera, withPlaceholder: true }]);
 
   return (
     <>
+      <RecordingStatus configured={recordingConfigured} />
       <GridLayout tracks={tiles}>
         <ParticipantTile />
       </GridLayout>
@@ -99,6 +102,22 @@ function Call({ captionsMode }: { captionsMode: CaptionsMode }) {
       <DisconnectButton className="lk-button hangUp">Hang up</DisconnectButton>
     </>
   );
+}
+
+function RecordingStatus({ configured }: { configured: boolean }) {
+  const isRecording = useIsRecording();
+
+  if (!configured) {
+    return <span className="recordingStatus idle">Not recording (egress not configured)</span>;
+  }
+  if (!isRecording) {
+    return (
+      <span className="recordingStatus starting">
+        Starting recording… the agent greets you once it&apos;s live
+      </span>
+    );
+  }
+  return <span className="recordingStatus live">● Recording</span>;
 }
 
 function usePublishedCaptionsMode(mode: CaptionsMode) {
