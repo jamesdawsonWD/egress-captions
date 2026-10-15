@@ -1,0 +1,81 @@
+@import './App.css';
+
+body {
+  font-size: 14px;
+  overflow: auto;
+}
+
+.userApp {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.callBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #333;
+}
+
+.captionsMode {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.captionsMode legend {
+  float: left;
+  margin-right: 8px;
+  color: #aaa;
+}
+
+.captionsMode label {
+  padding: 6px 12px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.captionsMode label.selected {
+  background: #1fd5f9;
+  border-color: #1fd5f9;
+  color: black;
+}
+
+.captionsMode input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.recordingStatus {
+  color: #ff5a5a;
+}
+
+.callRoom {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.lobby {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.hangUp {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+}
