@@ -68,7 +68,9 @@ async function handleSessionRequest(req: IncomingMessage, res: ServerResponse, e
     credentials.url,
     credentials.apiKey,
     credentials.apiSecret,
-  ).createDispatch(roomName, AGENT_NAME);
+  ).createDispatch(roomName, AGENT_NAME, {
+    metadata: JSON.stringify({ waitForRecording: recordingEgress !== undefined }),
+  });
 
   const session: Session = {
     serverUrl: credentials.url,

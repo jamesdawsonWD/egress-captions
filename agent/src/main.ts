@@ -3,6 +3,11 @@ import { EnhancerModel, audioEnhancement } from '@livekit/plugins-ai-coustics';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import { createAgent } from './agent.ts';
+import {
+  RECORDING_START_TIMEOUT_MS,
+  dispatchWantsRecordingFirst,
+  waitForRecordingToStart,
+} from './recording.ts';
 
 // Load environment variables from a local file.
 // Make sure to set LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET
@@ -72,6 +77,10 @@ export default defineAgent({
 
     // Join the room and connect to the user
     await ctx.connect();
+
+    if (dispatchWantsRecordingFirst(ctx.job.metadata)) {
+      await waitForRecordingToStart(ctx.room, RECORDING_START_TIMEOUT_MS);
+    }
 
     // Greet the user on joining
     session.generateReply({

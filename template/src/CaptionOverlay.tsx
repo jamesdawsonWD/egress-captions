@@ -21,9 +21,7 @@ export default function CaptionOverlay() {
     <div className="captions">
       {recentCaptions.map((caption) => (
         <p key={segmentId(caption)} className="caption">
-          <span className="captionSpeaker">
-            {speakerLabel(room, caption.participantInfo.identity)}
-          </span>
+          <SpeakerLabel role={speakerRole(room, caption.participantInfo.identity)} />
           {caption.text}
         </p>
       ))}
@@ -46,10 +44,17 @@ function segmentId(caption: TextStreamData): string {
   return caption.streamInfo.attributes?.[SEGMENT_ID_ATTRIBUTE] ?? caption.streamInfo.id;
 }
 
-function speakerLabel(room: Room, identity: string): string {
-  const speaker = room.remoteParticipants.get(identity);
-  if (speaker?.kind === ParticipantKind.AGENT) {
-    return 'Agent';
-  }
-  return speaker?.name || identity;
+type SpeakerRole = 'agent' | 'user';
+
+const SPEAKER_LABELS: Record<SpeakerRole, string> = {
+  agent: 'Agent',
+  user: 'User',
+};
+
+function speakerRole(room: Room, identity: string): SpeakerRole {
+  return room.remoteParticipants.get(identity)?.kind === ParticipantKind.AGENT ? 'agent' : 'user';
+}
+
+function SpeakerLabel({ role }: { role: SpeakerRole }) {
+  return <span className={`captionSpeaker ${role}`}>{SPEAKER_LABELS[role]}</span>;
 }

@@ -81,6 +81,13 @@ body {
 
 .captionSpeaker {
   margin-right: 0.6vw;
-  color: #1fd5f9;
   font-weight: 600;
+}
+
+.captionSpeaker.agent {
+  color: #4da3ff;
+}
+
+.captionSpeaker.user {
+  color: #ff9f40;
 }
